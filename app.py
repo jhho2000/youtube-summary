@@ -1,7 +1,12 @@
 import os
 import openai
+import logging
 from flask import Flask, render_template, request, jsonify
 from youtube_transcript_api import YouTubeTranscriptApi
+
+# 로그 설정
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -10,12 +15,16 @@ app = Flask(__name__)
 #openai.api_key = os.getenv("OPENAI_API_KEY")  # 환경 변수 방식
 openai.api_key = "YOUR-API-KEY"      # 직접 입력 방식 (노출 주의)
 
+
+
 def get_youtube_transcript(video_id, languages=['ko', 'en']):
     """
     Generate a summary, highlight, and key insights in korean.
     """
 
-    print("Video ID : https://www.youtube.com/watch?v=" + video_id)
+    
+    logger.info("Video ID : https://www.youtube.com/watch?v=" + video_id)
+
 
     transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
     
@@ -73,11 +82,11 @@ def summarize_text_with_chatgpt(text, model="gpt-3.5-turbo"):
 
     # ChatCompletion 응답에서 토큰 사용량 출력
     model
-    print("Model :", model)
-    print("Output :\n", response["choices"][0]["message"]["content"].strip())
-    print("Prompt tokens:", response["usage"]["prompt_tokens"])
-    print("Completion tokens:", response["usage"]["completion_tokens"])
-    print("$ Total tokens:", response["usage"]["total_tokens"])
+    logger.info(f"Model : {model}")
+    logger.info(f"Output :\n{response['choices'][0]['message']['content'].strip()}")
+    logger.info(f"Prompt tokens: {response['usage']['prompt_tokens']}")
+    logger.info(f"Completion tokens: {response['usage']['completion_tokens']}")
+    logger.info(f"$ Total tokens: {response['usage']['total_tokens']}")
 
     return response["choices"][0]["message"]["content"].strip()
 
@@ -91,12 +100,14 @@ def summarize():
     video_id = data.get("video_id", "").strip()
 
     if not video_id:
+        logger.warning("요약 요청 실패: video_id가 제공되지 않음")
         return jsonify({"error": "No video_id provided"}), 400
     
     try:
         # 2) 자막 가져오기
         transcript_data = get_youtube_transcript(video_id, ['ko', 'en'])
         if not transcript_data:
+            logger.warning(f"자막을 찾을 수 없음: {video_id}")
             return jsonify({"error": "자막을 찾을 수 없습니다."}), 404
 
         # 3) 자막을 텍스트로 합치기
@@ -110,6 +121,7 @@ def summarize():
             "summary": summary
         })
     except Exception as e:
+        logger.error(f"요약 요청 처리 중 오류 발생: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
