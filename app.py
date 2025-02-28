@@ -14,6 +14,9 @@ def get_youtube_transcript(video_id, languages=['ko', 'en']):
     """
     Generate a summary, highlight, and key insights in korean.
     """
+
+    print("Video ID : https://www.youtube.com/watch?v=" + video_id)
+
     transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
     
     # 여러 언어 중 우선 순위대로 자막을 시도
@@ -69,9 +72,12 @@ def summarize_text_with_chatgpt(text, model="gpt-3.5-turbo"):
     )
 
     # ChatCompletion 응답에서 토큰 사용량 출력
+    model
+    print("Model :", model)
+    print("Output :\n", response["choices"][0]["message"]["content"].strip())
     print("Prompt tokens:", response["usage"]["prompt_tokens"])
     print("Completion tokens:", response["usage"]["completion_tokens"])
-    print("Total tokens:", response["usage"]["total_tokens"])
+    print("$ Total tokens:", response["usage"]["total_tokens"])
 
     return response["choices"][0]["message"]["content"].strip()
 
@@ -95,8 +101,7 @@ def summarize():
 
         # 3) 자막을 텍스트로 합치기
         transcript_text = extract_transcript_text(transcript_data)
-        print(transcript_text)
-        
+                
         # 4) ChatGPT를 통해 요약
         summary = summarize_text_with_chatgpt(transcript_text, "o1-mini-2024-09-12")
 
@@ -109,4 +114,4 @@ def summarize():
 
 if __name__ == "__main__":
     # 5) 서버 실행
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=11080)
