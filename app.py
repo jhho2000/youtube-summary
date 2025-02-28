@@ -8,12 +8,11 @@ app = Flask(__name__)
 # 1) OpenAI API 키 설정
 #    환경 변수 혹은 직접 문자열로 설정
 #openai.api_key = os.getenv("OPENAI_API_KEY")  # 환경 변수 방식
-openai.api_key = "OPENAI_API_KEY"      # 직접 입력 방식 (노출 주의)
+openai.api_key = "YOUR-API-KEY"      # 직접 입력 방식 (노출 주의)
 
 def get_youtube_transcript(video_id, languages=['ko', 'en']):
     """
-    주어진 video_id로 유튜브 자막을 가져오고, 여러 언어 중
-    가용한 첫 번째 자막을 반환한다.
+    Generate a summary, highlight, and key insights in korean.
     """
     transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
     
@@ -46,16 +45,25 @@ def summarize_text_with_chatgpt(text, model="gpt-3.5-turbo"):
         model=model,
         messages=[
             {
-                "role": "system",
-                "content": "You are a helpful assistant."
+                "role": "user",
+                # "content": "Generate a summary, highlight, and key insights in korean."
+                "content" : """
+                    주어진 텍스트는 비디오 또는 강의 내용을 텍스트로 변환한 자료입니다. 이 내용을 분석하여 구조화된 요약을 생성해주세요.
+
+                    아래 형식에 맞게 결과물을 작성해주세요:
+
+                    1. "요약" 섹션: 전체 내용을 200-300자 내외로 간결하게 요약합니다.
+
+                    2. "하이라이트" 섹션: 주요 포인트를 7-8개의 불릿 포인트로 나열합니다. 각 항목은 이모지로 시작하고, 굵은 제목과 간략한 설명을 포함합니다.
+
+                    3. "주요 통찰" 섹션: 내용에서 얻을 수 있는 7개의 깊이 있는 통찰을 제공합니다. 각 통찰은 이모지로 시작하고, 굵은 제목과 2-3문장의 설명을 포함합니다.
+
+                    전체적으로 내용은 정보를 논리적으로 구조화하고, 읽기 쉽게 정리하며, 원본 텍스트의 핵심 내용과 의미를 정확하게 전달해야 합니다.
+                """
             },
             {
                 "role": "user",
-                "content": f"""
-                            아래에 제시된 유튜브 영상 스크립트를 확인하고, 영상의 핵심 주제, 중요 포인트, 그리고 결론을 중심으로 간결하고 명확하게 요약해 주세요.
-                            또한 시청자가 얻을 수 있는 교훈이나 통찰이 있다면 함께 정리해 주시기 바랍니다.
-                            : {text}
-                        """
+                "content": text
             }
         ]
     )
@@ -87,9 +95,10 @@ def summarize():
 
         # 3) 자막을 텍스트로 합치기
         transcript_text = extract_transcript_text(transcript_data)
-
+        print(transcript_text)
+        
         # 4) ChatGPT를 통해 요약
-        summary = summarize_text_with_chatgpt(transcript_text, "gpt-4o")
+        summary = summarize_text_with_chatgpt(transcript_text, "o1-mini-2024-09-12")
 
         return jsonify({
             "transcript": transcript_text,
