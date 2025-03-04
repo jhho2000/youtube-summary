@@ -3,6 +3,7 @@ import openai
 import logging
 from flask import Flask, render_template, request, jsonify
 from youtube_transcript_api import YouTubeTranscriptApi
+from dotenv import load_dotenv
 
 # 로그 설정
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -13,9 +14,10 @@ app = Flask(__name__)
 # 1) OpenAI API 키 설정
 #    환경 변수 혹은 직접 문자열로 설정
 #openai.api_key = os.getenv("OPENAI_API_KEY")  # 환경 변수 방식
-openai.api_key = "YOUR-API-KEY"      # 직접 입력 방식 (노출 주의)
+#openai.api_key = "YOUR-API-KEY"      # 직접 입력 방식 (노출 주의)
 
-
+load_dotenv()  # .env 파일 로드
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def get_youtube_transcript(video_id, languages=['ko', 'en']):
     """
@@ -93,6 +95,10 @@ def summarize_text_with_chatgpt(text, model="gpt-3.5-turbo"):
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
+
+@app.route("/app", methods=["GET"])
+def app_page():
+    return render_template("app.html")
 
 @app.route("/summarize", methods=["POST"])
 def summarize():

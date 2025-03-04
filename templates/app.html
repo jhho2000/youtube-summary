@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>유튜브 영상 요약</title>
+  
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      margin: 0;
+      padding: 16px;
+      background-color: #f8f9fa;
+      max-width: 100%;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      font-size: clamp(18px, 5vw, 22px);
+      margin-bottom: 12px;
+      color: #333;
+      text-align: center;
+    }
+
+    p {
+      font-size: clamp(14px, 4vw, 16px);
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .input-container {
+      margin-bottom: 20px;
+      background-color: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: clamp(14px, 4vw, 16px);
+      color: #333;
+      font-weight: 500;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+      margin-bottom: 14px;
+      -webkit-appearance: none;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #FF0000;
+      box-shadow: 0 0 0 2px rgba(255,0,0,0.1);
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      background-color: #FF0000;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: clamp(16px, 4vw, 18px);
+      font-weight: 500;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:active {
+      background-color: #CC0000;
+      transform: scale(0.98);
+    }
+
+    #result {
+      margin-top: 20px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 16px;
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    @media (min-width: 768px) {
+      body {
+        padding: 24px;
+        max-width: 800px;
+      }
+
+      .container {
+        flex-direction: row;
+      }
+
+      .usage, .summary {
+        width: 100%;
+      }
+    }
+
+    .usage, .summary {
+      width: 100%;
+      padding: 16px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      white-space: pre-wrap;
+      box-sizing: border-box;
+      overflow-wrap: break-word;
+    }
+    
+    .token-info {
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #555;
+    }
+    
+    button:disabled {
+      background-color: #999;
+      cursor: not-allowed;
+    }
+    
+    /* 모바일 키보드가 올라왔을 때 화면 최적화 */
+    @media (max-height: 500px) {
+      h1 {
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+      
+      p {
+        margin-bottom: 12px;
+        font-size: 14px;
+      }
+      
+      .input-container {
+        margin-bottom: 12px;
+        padding: 12px;
+      }
+      
+      input[type="text"] {
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      
+      button {
+        padding: 12px;
+      }
+    }
+
+    code {
+      background: #f1f1f1;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      word-break: break-all;
+      display: inline-block;
+    }
+
+    :root {
+
+      /* font */
+      --phtr-fz-display-sm: 4rem;
+      --phtr-fz-display-md: 5rem;
+      --phtr-fz-display-lg: 6.6rem;
+      --phtr-fz-heading-sm: 3.2rem;
+      --phtr-fz-heading-md: 4rem;
+      --phtr-fz-heading-lg: 5rem;
+      --phtr-fz-title-xsm: 1.5rem;
+      --phtr-fz-title-sm: 1.8rem;
+      --phtr-fz-title-md: 2rem;
+      --phtr-fz-title-lg: 2.1rem;
+      --phtr-fz-title-xlg: 2.5rem;
+      --phtr-fz-title-xxlg: 3rem;
+      --phtr-fz-body-xsm: 1.2rem;
+      --phtr-fz-body-sm: 1.4rem;
+      --phtr-fz-body-md: 1.6rem;
+      --phtr-fz-body-lg: 2rem;
+      --phtr-fz-link-sm: 1.5rem;
+      --phtr-fz-link-md: 1.7rem;
+      --phtr-fz-link-lg: 1.9rem;
+      --phtr-fz-detail-sm: 1.3rem;
+      --phtr-fz-detail-md: 1.5rem;
+      --phtr-fz-detail-lg: 1.7rem;
+      --phtr-fz-label-xsm: 1.3rem;
+      --phtr-fz-label-sm: 1.5rem;
+      --phtr-fz-label-md: 1.7rem;
+      --phtr-fz-label-lg: 1.9rem;
+
+      /* spacer */
+      --phtr-spacer-20: 8rem;
+      --phtr-spacer-15: 6rem;
+      --phtr-spacer-12: 4.8rem;
+      --phtr-spacer-10: 4rem;
+      --phtr-spacer-9: 3.6rem;
+      --phtr-spacer-8: 3.2rem;
+      --phtr-spacer-7: 2.8rem;
+      --phtr-spacer-6: 2.4rem;
+      --phtr-spacer-5: 2.0rem;
+      --phtr-spacer-4: 1.6rem;
+      --phtr-spacer-3: 1.2rem;
+      --phtr-spacer-2: .8rem;
+      --phtr-spacer-1: .4rem;
+      --phtr-spacer-0: 0;
+      --phtr-spacer-default: 1px;
+      --phtr-spacer-default2: 2px;
+      --phtr-spacer-full: 100%;
+
+    }
+
+    .summary {
+      font-size: clamp(14px, 4vw, 16px);
+    }
+
+    .summary h1, .summary h2 {
+      font-size: clamp(18px, 5vw, 20px);
+    }
+
+    .summary h3 {
+      font-size: clamp(16px, 4.5vw, 18px);
+    }
+
+    .summary h4 {
+      font-size: clamp(14px, 4vw, 16px);
+    }
+
+    .summary p {
+      font-size: clamp(14px, 4vw, 16px);
+    }
+
+    .summary {display:flex; flex-direction: column;}
+    .summary * {line-height: 1.2; margin:0; padding:0;}
+    .summary > * + * {margin-top: .8rem;}
+
+    .summary h1, .summary h2 {font-size: var(--phtr-fz-title-xsm); padding-left: 0;}
+    .summary h3{font-size:var(--phtr-fz-title-xsm); margin-top: 1.6rem;  margin-bottom: var(--phtr-spacer-4); padding-left: 0!important;}
+    .summary > h3:first-child{margin-top: 0; margin-bottom: .5rem;}
+    .summary >/*  */ * + h3{margin-bottom: .5rem;}
+    .summary h4{font-size: var(--phtr-fz-body-xsm); margin-bottom: 1rem; padding-left: var(--phtr-spacer-1);}
+    .summary > * + h4 {margin-top: 1.6rem; margin-bottom: .2rem;}
+    .summary > *:not(h4) {padding-left: var(--phtr-spacer-2);}
+    .summary * ol {list-style: auto; padding-left: var(--phtr-spacer-5);}
+    .summary li + li {margin-top: .4rem;}
+    .summary ul > li {position: relative; padding-left: 1rem;}
+    .summary p {size:var(--phtr-fz-body-xsm);}
+    /* .summary ul > li:before {content: ''; position: absolute; top: .7rem; left: 0; width: 3px; height: 3px; border-radius: 50px; background-color:#111;}
+    .summary ul ul > li:before {height: 1px; top: 1rem;} */
+  </style>
+
+  
+</head>
+<body>
+  <h1>유튜브 영상 요약</h1>
+  <p>유튜브 영상 링크를 입력하세요</p>
+
+  <div class="input-container">
+    <label for="video_id">영상 URL</label>
+    <input type="text" id="video_id" placeholder="https://www.youtube.com/watch?v=..." />
+    <button id="submitBtn">요약하기</button>
+  </div>
+
+  <div id="result"></div>
+
+  <!-- marked 라이브러리 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const submitBtn = document.getElementById("submitBtn");
+    const resultDiv = document.getElementById("result");
+    const videoInput = document.getElementById("video_id");
+
+    // 입력 필드에서 엔터 키 처리
+    videoInput.addEventListener("keypress", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitBtn.click();
+      }
+    });
+
+    submitBtn.addEventListener("click", async () => {
+      const inputValue = videoInput.value.trim();
+      
+      if (!inputValue) {
+        alert("유튜브 영상 URL을 입력하세요.");
+        return;
+      }
+
+      let videoId;
+      
+      try {
+        // URL 파싱 시도
+        const parsedUrl = new URL(inputValue);
+        
+        // YouTube 표준 URL 형식 (watch?v=ID)
+        videoId = parsedUrl.searchParams.get('v');
+        
+        // YouTube 단축 URL 형식 (youtu.be/ID)
+        if (!videoId && parsedUrl.hostname === 'youtu.be') {
+          videoId = parsedUrl.pathname.substring(1);
+        }
+      } catch (error) {
+        // URL 파싱 실패 시 직접 입력된 값을 ID로 간주
+        if (inputValue.match(/^[a-zA-Z0-9_-]{11}$/)) {
+          videoId = inputValue;
+        }
+      }
+
+      if (!videoId) {
+        alert("올바른 유튜브 영상 URL을 입력하세요.");
+        return;
+      }
+
+      try {
+        // 로딩 상태 표시
+        resultDiv.innerHTML = "<div class='loading'>요약 중입니다... 잠시만 기다려 주세요.</div>";
+        
+        // 버튼 비활성화
+        submitBtn.disabled = true;
+        submitBtn.textContent = "요약 중...";
+        
+        // 서버에 요약 요청
+        const response = await fetch("/summarize", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ video_id: videoId })
+        });
+        
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || "요약 요청 실패");
+        }
+
+        const data = await response.json();
+        const { summary, totalTokens } = data;
+
+        // Marked 라이브러리를 이용해 Markdown 변환
+        const summaryHTML = marked.parse(summary);
+
+        // 결과 출력
+        resultDiv.innerHTML = `
+          <div class="container">
+            <div class="summary">
+              ${summaryHTML}
+            </div>            
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `<p style="color:red;">에러: ${error.message}</p>`;
+      } finally {
+        // 버튼 상태 복원
+        submitBtn.disabled = false;
+        submitBtn.textContent = "요약하기";
+      }
+    });
+  </script>
+</body>
+</html>
