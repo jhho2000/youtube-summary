@@ -156,7 +156,7 @@
         }
 
         const data = await response.json();
-        const { transcript, summary } = data;
+        const { transcript, summary, totalTokens} = data;
 
         // Marked 라이브러리를 이용해 Markdown 변환
         const summaryHTML = marked.parse(summary);
@@ -168,7 +168,7 @@
               ${summaryHTML}
             </div>
             <div class="transcript">
-              ${transcript}
+              사용 토큰 : ${data.totalTokens}
             </div>
           </div>
         `;

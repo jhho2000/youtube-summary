@@ -88,7 +88,7 @@ def summarize_text_with_chatgpt(text, model="gpt-3.5-turbo"):
     logger.info(f"Completion tokens: {response['usage']['completion_tokens']}")
     logger.info(f"$ Total tokens: {response['usage']['total_tokens']}")
 
-    return response["choices"][0]["message"]["content"].strip()
+    return [response["choices"][0]["message"]["content"].strip(), response['usage']['total_tokens']]
 
 @app.route("/", methods=["GET"])
 def index():
@@ -114,11 +114,12 @@ def summarize():
         transcript_text = extract_transcript_text(transcript_data)
                 
         # 4) ChatGPT를 통해 요약
-        summary = summarize_text_with_chatgpt(transcript_text, "o1-mini-2024-09-12")
+        result = summarize_text_with_chatgpt(transcript_text, "o1-mini-2024-09-12")
 
         return jsonify({
             "transcript": transcript_text,
-            "summary": summary
+            "summary": result[0],
+            "totalTokens": result[1]
         })
     except Exception as e:
         logger.error(f"요약 요청 처리 중 오류 발생: {e}")
