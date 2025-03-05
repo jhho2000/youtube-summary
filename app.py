@@ -51,29 +51,28 @@ def extract_transcript_text(transcript_data):
     lines = [item['text'] for item in transcript_data]
     return " ".join(lines)
 
+def load_prompt(filename):
+    """프롬프트 파일을 로드하는 함수"""
+    prompt_path = os.path.join(os.path.dirname(__file__), 'prompts', filename)
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as file:
+            return file.read()
+    except FileNotFoundError:
+        logger.error(f"프롬프트 파일을 찾을 수 없습니다: {filename}")
+        return None
+
 def summarize_text_with_chatgpt(text, model="gpt-3.5-turbo"):
     """
     ChatGPT를 사용하여 텍스트를 한국어로 요약한다.
     """
+    prompt = load_prompt('summary-0.2.0.txt')
+
     response = openai.ChatCompletion.create(
         model=model,
         messages=[
             {
                 "role": "user",
-                # "content": "Generate a summary, highlight, and key insights in korean."
-                "content" : """
-                    주어진 텍스트는 비디오 또는 강의 내용을 텍스트로 변환한 자료입니다. 이 내용을 분석하여 구조화된 요약을 생성해주세요.
-
-                    아래 형식에 맞게 결과물을 작성해주세요:
-
-                    1. "요약" 섹션: 전체 내용을 200-300자 내외로 간결하게 요약합니다.
-
-                    2. "하이라이트" 섹션: 주요 포인트를 7-8개의 불릿 포인트로 나열합니다. 각 항목은 이모지로 시작하고, 굵은 제목과 간략한 설명을 포함합니다.
-
-                    3. "주요 통찰" 섹션: 내용에서 얻을 수 있는 7개의 깊이 있는 통찰을 제공합니다. 각 통찰은 이모지로 시작하고, 굵은 제목과 2-3문장의 설명을 포함합니다.
-
-                    전체적으로 내용은 정보를 논리적으로 구조화하고, 읽기 쉽게 정리하며, 원본 텍스트의 핵심 내용과 의미를 정확하게 전달해야 합니다.
-                """
+                "content": prompt
             },
             {
                 "role": "user",
@@ -120,8 +119,9 @@ def summarize():
         transcript_text = extract_transcript_text(transcript_data)
                 
         # 4) ChatGPT를 통해 요약
-        result = summarize_text_with_chatgpt(transcript_text, "o1-mini-2024-09-12")
-
+        #result = summarize_text_with_chatgpt(transcript_text, "o1-mini-2024-09-12")
+        result = summarize_text_with_chatgpt(transcript_text, "gpt-4o-mini")
+        
         return jsonify({
             "transcript": transcript_text,
             "summary": result[0],
