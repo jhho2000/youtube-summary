@@ -1,6 +1,7 @@
 import os
 import openai
 import logging
+import pymysql
 from flask import Flask, render_template, request, jsonify
 from youtube_transcript_api import YouTubeTranscriptApi
 from dotenv import load_dotenv
@@ -18,6 +19,17 @@ app = Flask(__name__)
 
 load_dotenv()  # .env 파일 로드
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# MySQL 연결 설정
+def get_db_connection():
+    return pymysql.connect(
+        host=os.getenv('DB_HOST', 'localhost'),
+        port=int(os.getenv('DB_PORT', 3306)),
+        user=os.getenv('DB_USER', 'root'),
+        password=os.getenv('DB_PASSWORD', ''),
+        db=os.getenv('DB_NAME', 'youtube_summary'),
+        charset='utf8mb4'
+    )
 
 def get_youtube_transcript(video_id, languages=['ko', 'en']):
     """
